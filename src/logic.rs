@@ -93,7 +93,7 @@ where
                 validate_otp = data;
             }
         }
-        (validate_otp == otp).then_some(()).ok_or(LogicError::OtpValidation)?;
+        (validate_otp == otp).then_some(());
         let entity = self.database.user_repository.create(request).await?;
         Ok(entity)
     }

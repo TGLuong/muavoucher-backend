@@ -2,6 +2,7 @@ use std::net::SocketAddr;
 
 use axum::Router;
 use tokio::net::TcpListener;
+use tower_http::cors::CorsLayer;
 
 use crate::{
     auth_token::AuthTokenTrait,
@@ -29,7 +30,7 @@ impl HttpServer {
         KV: KVStoreTrait,
         AU: AuthTokenTrait,
     {
-        let router = Router::new().merge(user::router(context.clone()));
+        let router = Router::new().merge(user::router(context.clone())).layer(CorsLayer::permissive());
         let listener = TcpListener::bind(socket).await?;
         Ok(Self { listener, router })
     }

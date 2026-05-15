@@ -65,7 +65,7 @@ where
 
 pub async fn signup<OTP, KV, AU>(
     State(context): State<HttpContext<OTP, KV, AU>>,
-    OtpHeader(otp): OtpHeader,
+    // OtpHeader(otp): OtpHeader,
     Json(request): Json<CreateUserRequest>,
 ) -> Result<Json<ApiResponse<UserEntity>>, String>
 where
@@ -73,7 +73,7 @@ where
     KV: KVStoreTrait,
     AU: AuthTokenTrait,
 {
-    let user = context.logic.create_user(otp, request).await.map_err(|e| e.to_string())?;
+    let user = context.logic.create_user("".into(), request).await.map_err(|e| e.to_string())?;
     Ok(Json(ApiResponse::success(Some("create user success".into()), user)))
 }
 
