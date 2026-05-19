@@ -2,7 +2,7 @@ use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-use crate::{storage::entities::user::UserEntity, utils::time::now};
+use crate::storage::entities::user::UserEntity;
 
 pub mod jwt;
 

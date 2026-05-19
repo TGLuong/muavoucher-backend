@@ -4,13 +4,17 @@ use axum::{
     response::Response,
 };
 
-use crate::{auth_token::AuthTokenTrait, otp_notifier::OtpNotifierTrait, storage::kv_store::KVStoreTrait, transport::http::context::HttpContext};
+use crate::{
+    auth_token::AuthTokenTrait, otp_notifier::OtpNotifierTrait, storage::kv_store::KVStoreTrait, transport::http::context::HttpContext,
+    webhook_validator::WebhookValidator,
+};
 
-pub async fn tracing_handle_fn<OTP, KV, AU>(State(_state): State<HttpContext<OTP, KV, AU>>, request: Request, next: Next) -> Response
+pub async fn tracing_handle_fn<OTP, KV, AU, WU>(State(_state): State<HttpContext<OTP, KV, AU, WU>>, request: Request, next: Next) -> Response
 where
     OTP: OtpNotifierTrait,
     KV: KVStoreTrait,
     AU: AuthTokenTrait,
+    WU: WebhookValidator,
 {
     let method = request.method().clone();
     let uri = request.uri().clone();

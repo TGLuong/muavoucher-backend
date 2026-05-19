@@ -8,7 +8,11 @@ use crate::{
     auth_token::AuthTokenTrait,
     otp_notifier::OtpNotifierTrait,
     storage::kv_store::KVStoreTrait,
-    transport::http::{api::user, context::HttpContext},
+    transport::http::{
+        api::{transaction, user},
+        context::HttpContext,
+    },
+    webhook_validator::WebhookValidator,
 };
 
 pub mod api;
@@ -24,13 +28,17 @@ pub struct HttpServer {
 }
 
 impl HttpServer {
-    pub async fn new<OTP, KV, AU>(socket: SocketAddr, context: HttpContext<OTP, KV, AU>) -> anyhow::Result<Self>
+    pub async fn new<OTP, KV, AU, WU>(socket: SocketAddr, context: HttpContext<OTP, KV, AU, WU>) -> anyhow::Result<Self>
     where
         OTP: OtpNotifierTrait,
         KV: KVStoreTrait,
         AU: AuthTokenTrait,
+        WU: WebhookValidator,
     {
-        let router = Router::new().merge(user::router(context.clone())).layer(CorsLayer::permissive());
+        let router = Router::new()
+            .merge(user::router(context.clone()))
+            .merge(transaction::router(context.clone()))
+            .layer(CorsLayer::permissive());
         let listener = TcpListener::bind(socket).await?;
         Ok(Self { listener, router })
     }

@@ -5,6 +5,7 @@ use crate::{
     otp_notifier::OtpNotifierTrait,
     storage::{entities::user::UserRole, kv_store::KVStoreTrait},
     transport::http::context::HttpContext,
+    webhook_validator::WebhookValidator,
 };
 use axum::{
     extract::{FromRequestParts, Path},
@@ -12,18 +13,21 @@ use axum::{
 };
 use uuid::Uuid;
 
+pub mod sepay;
+
 #[derive(Debug)]
 pub struct OtpHeader(pub String);
 
-impl<OTP, KV, AU> FromRequestParts<HttpContext<OTP, KV, AU>> for OtpHeader
+impl<OTP, KV, AU, WU> FromRequestParts<HttpContext<OTP, KV, AU, WU>> for OtpHeader
 where
     OTP: OtpNotifierTrait,
     KV: KVStoreTrait,
     AU: AuthTokenTrait,
+    WU: WebhookValidator,
 {
     type Rejection = String;
 
-    async fn from_request_parts(parts: &mut Parts, _state: &HttpContext<OTP, KV, AU>) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, _state: &HttpContext<OTP, KV, AU, WU>) -> Result<Self, Self::Rejection> {
         let otp = parts
             .headers
             .get("user_otp")
@@ -40,15 +44,16 @@ pub struct AuthUserId {
     pub role: UserRole,
 }
 
-impl<OTP, KV, AU> FromRequestParts<HttpContext<OTP, KV, AU>> for AuthUserId
+impl<OTP, KV, AU, WU> FromRequestParts<HttpContext<OTP, KV, AU, WU>> for AuthUserId
 where
     OTP: OtpNotifierTrait,
     KV: KVStoreTrait,
     AU: AuthTokenTrait,
+    WU: WebhookValidator,
 {
     type Rejection = (StatusCode, String);
 
-    async fn from_request_parts(parts: &mut Parts, state: &HttpContext<OTP, KV, AU>) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, state: &HttpContext<OTP, KV, AU, WU>) -> Result<Self, Self::Rejection> {
         let Path(id) = Path::<String>::from_request_parts(parts, state)
             .await
             .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;

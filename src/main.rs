@@ -13,6 +13,7 @@ use crate::{
     otp_notifier::{stdout::StdoutOtpNotifier, zalo_gmail::ZaloGmailNotifier},
     storage::{kv_store::memory::MemoryCache, migration::Migrator, repository::init_repository},
     transport::http::{HttpServer, context::HttpContext},
+    webhook_validator::sepay::SepayWebhookValidator,
 };
 
 pub mod auth_token;
@@ -21,10 +22,11 @@ pub mod otp_notifier;
 pub mod storage;
 pub mod transport;
 pub mod utils;
+pub mod webhook_validator;
 
 #[derive(Debug, Parser)]
 struct Args {
-    #[arg(long, env, default_value = "postgresql://user:password@localhost:5432/muavoucher")]
+    #[arg(long, env, default_value = "postgresql://user:password@localhost:9990/muavoucher")]
     databse: String,
     #[clap(subcommand)]
     command: Command,
@@ -45,6 +47,8 @@ struct StartCommand {
     migration: bool,
     #[arg(long, env)]
     secret: String,
+    #[arg(long, env)]
+    sepay_key: String,
     #[arg(long, env)]
     gmail_sender: String,
     #[arg(long, env)]
@@ -90,8 +94,9 @@ async fn start(database: String, cmd: StartCommand) -> anyhow::Result<()> {
     let otp_notifier = ZaloGmailNotifier::new(cmd.zalo_key, cmd.gmail_sender, cmd.gmail_app_key);
     let kv_store = MemoryCache::default();
     let auth_token = JwtAuthToken::new(cmd.secret);
+    let sepay_validator = SepayWebhookValidator::new(cmd.sepay_key);
     let database = init_repository(connection);
-    let http_context = HttpContext::new(Logic::new(otp_notifier, kv_store, auth_token, database));
+    let http_context = HttpContext::new(Logic::new(otp_notifier, kv_store, auth_token, sepay_validator, database));
     let http = HttpServer::new(cmd.http_addr, http_context).await?;
     http.run();
     loop {

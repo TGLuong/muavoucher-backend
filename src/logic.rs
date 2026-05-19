@@ -1,5 +1,5 @@
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
-use rand::{RngExt, distr::Alphanumeric};
+use rand::RngExt;
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -12,6 +12,7 @@ use crate::{
         kv_store::{KVStoreError, KVStoreTrait, OtpKey},
         repository::{CenterDatabase, user::UserRepositoryTrait},
     },
+    webhook_validator::WebhookValidator,
 };
 
 #[derive(Debug, Error)]
@@ -33,29 +34,32 @@ pub enum LogicError {
 }
 
 #[derive(Debug, Clone)]
-pub struct Logic<OTP, KV, AU> {
+pub struct Logic<OTP, KV, AU, WU> {
     otp_notifier: OTP,
     kv_store: KV,
     auth_token: AU,
+    webhook_validator: WU,
     database: CenterDatabase,
 }
 
-impl<OTP, KV, AU> Logic<OTP, KV, AU> {
-    pub fn new(otp_notifier: OTP, kv_store: KV, auth_token: AU, database: CenterDatabase) -> Self {
+impl<OTP, KV, AU, WU> Logic<OTP, KV, AU, WU> {
+    pub fn new(otp_notifier: OTP, kv_store: KV, auth_token: AU, webhook_validator: WU, database: CenterDatabase) -> Self {
         Self {
             otp_notifier,
             kv_store,
             auth_token,
+            webhook_validator,
             database,
         }
     }
 }
 
-impl<OTP, KV, AU> Logic<OTP, KV, AU>
+impl<OTP, KV, AU, WU> Logic<OTP, KV, AU, WU>
 where
     OTP: OtpNotifierTrait,
     KV: KVStoreTrait,
     AU: AuthTokenTrait,
+    WU: WebhookValidator,
 {
     pub async fn login_user(&self, request: LoginUserRequest) -> Result<LoginUserResponse, LogicError> {
         let mut filter = UserFilter::default();
@@ -122,5 +126,9 @@ where
     pub async fn user_authen(&self, token: &str) -> Result<Claims, LogicError> {
         let claims = self.auth_token.validate(&token)?;
         Ok(claims)
+    }
+
+    pub fn validate_sepay(&self, payload: &[u8], signature: &str) -> Result<(), String> {
+        self.webhook_validator.verify_signature(payload, signature).map_err(|e| e.to_string())
     }
 }

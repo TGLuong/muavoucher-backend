@@ -22,6 +22,12 @@ pub struct Model {
     phone: Option<String>,
     email: Option<String>,
     role: String,
+    #[sea_orm(column_type = "Decimal(Some((15, 2)))")]
+    balance: Decimal,
+    #[sea_orm(column_type = "Decimal(Some((15, 2)))")]
+    coin: Decimal,
+    #[sea_orm(column_type = "Decimal(Some((15, 2)))")]
+    affiliate_coin: Decimal,
     created_at: chrono::DateTime<Utc>,
     updated_at: Option<chrono::DateTime<Utc>>,
     deleted_at: Option<chrono::DateTime<Utc>>,
@@ -42,7 +48,24 @@ impl Into<UserEntity> for Model {
 }
 
 #[derive(Debug, Clone, EnumIter, DeriveRelation)]
-pub enum Relation {}
+pub enum Relation {
+    #[sea_orm(has_many = "super::order::Entity")]
+    Order,
+    #[sea_orm(has_many = "super::transaction_history::Entity")]
+    TransactionHistory,
+}
+
+impl Related<super::order::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Order.def()
+    }
+}
+
+impl Related<super::transaction_history::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::TransactionHistory.def()
+    }
+}
 
 impl ActiveModel {
     pub fn patch(&mut self, request: UpdateUserRequest) -> bool {
