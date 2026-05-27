@@ -9,7 +9,7 @@ use crate::{
     otp_notifier::OtpNotifierTrait,
     storage::kv_store::KVStoreTrait,
     transport::http::{
-        api::{transaction, user},
+        api::{link, transaction, user},
         context::HttpContext,
     },
     webhook_validator::WebhookValidator,
@@ -38,6 +38,7 @@ impl HttpServer {
         let router = Router::new()
             .merge(user::router(context.clone()))
             .merge(transaction::router(context.clone()))
+            .merge(link::router(context.clone()))
             .layer(CorsLayer::permissive());
         let listener = TcpListener::bind(socket).await?;
         Ok(Self { listener, router })

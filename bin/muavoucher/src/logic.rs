@@ -1,6 +1,9 @@
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use rand::RngExt;
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use tokio::process::Command;
 use uuid::Uuid;
 
 use crate::{
@@ -40,16 +43,30 @@ pub struct Logic<OTP, KV, AU, WU> {
     auth_token: AU,
     webhook_validator: WU,
     database: CenterDatabase,
+    get_link_script: String,
+    product_data_base: String,
+    client: Client,
 }
 
 impl<OTP, KV, AU, WU> Logic<OTP, KV, AU, WU> {
-    pub fn new(otp_notifier: OTP, kv_store: KV, auth_token: AU, webhook_validator: WU, database: CenterDatabase) -> Self {
+    pub fn new(
+        otp_notifier: OTP,
+        kv_store: KV,
+        auth_token: AU,
+        webhook_validator: WU,
+        database: CenterDatabase,
+        get_link_script: String,
+        product_data_base: String,
+    ) -> Self {
         Self {
             otp_notifier,
             kv_store,
             auth_token,
             webhook_validator,
             database,
+            get_link_script,
+            product_data_base,
+            client: Client::new(),
         }
     }
 }
@@ -130,5 +147,65 @@ where
 
     pub fn validate_sepay(&self, payload: &[u8], signature: &str) -> Result<(), String> {
         self.webhook_validator.verify_signature(payload, signature).map_err(|e| e.to_string())
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ShopeeResponse {
+    pub data: BatchCustomLink,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct BatchCustomLink {
+    #[serde(rename = "batchCustomLink")]
+    pub links: Vec<LinkDetail>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct LinkDetail {
+    #[serde(rename = "shortLink")]
+    pub short_link: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProductResponse {
+    #[serde(rename = "productInfo")]
+    pub product_info: ProductInfo,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProductInfo {
+    #[serde(rename = "productName")]
+    pub product_name: String,
+    pub price: u64,
+    #[serde(rename = "imageUrl")]
+    pub image_url: String,
+    #[serde(rename = "shopeeComFinal")]
+    pub shopee_com_final: u64,
+}
+
+impl<OTP, KV, AU, WU> Logic<OTP, KV, AU, WU>
+where
+    OTP: OtpNotifierTrait,
+    KV: KVStoreTrait,
+    AU: AuthTokenTrait,
+    WU: WebhookValidator,
+{
+    pub async fn get_link(&self, url: String) -> Result<String, String> {
+        let output = Command::new(&self.get_link_script).arg(url).output().await.map_err(|e| e.to_string())?;
+        if output.status.success() {
+            let response = serde_json::from_slice::<ShopeeResponse>(&output.stdout).map_err(|e| e.to_string())?;
+            let link = response.data.links.get(0).ok_or("missing ele 0".to_string())?;
+            return Ok(link.short_link.clone());
+        } else {
+            return Err("exec command error".into());
+        }
+    }
+
+    pub async fn get_product_info(&self, url: String) -> Result<ProductResponse, String> {
+        let url = format!("{}?url={}", self.product_data_base, url);
+        let response = self.client.get(url).send().await.map_err(|e| e.to_string())?;
+        let body = response.json::<ProductResponse>().await.map_err(|e| e.to_string())?;
+        Ok(body)
     }
 }

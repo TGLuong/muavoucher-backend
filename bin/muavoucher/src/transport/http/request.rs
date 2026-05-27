@@ -13,6 +13,7 @@ use axum::{
 };
 use uuid::Uuid;
 
+pub mod link;
 pub mod sepay;
 
 #[derive(Debug)]

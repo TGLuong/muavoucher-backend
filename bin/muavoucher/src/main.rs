@@ -55,6 +55,10 @@ struct StartCommand {
     gmail_app_key: String,
     #[arg(long, env)]
     zalo_key: String,
+    #[arg(long, env)]
+    get_link_script: String,
+    #[arg(long, env)]
+    product_info_base: String,
 }
 
 #[derive(Debug, Parser)]
@@ -96,7 +100,15 @@ async fn start(database: String, cmd: StartCommand) -> anyhow::Result<()> {
     let auth_token = JwtAuthToken::new(cmd.secret);
     let sepay_validator = SepayWebhookValidator::new(cmd.sepay_key);
     let database = init_repository(connection);
-    let http_context = HttpContext::new(Logic::new(otp_notifier, kv_store, auth_token, sepay_validator, database));
+    let http_context = HttpContext::new(Logic::new(
+        otp_notifier,
+        kv_store,
+        auth_token,
+        sepay_validator,
+        database,
+        cmd.get_link_script,
+        cmd.product_info_base,
+    ));
     let http = HttpServer::new(cmd.http_addr, http_context).await?;
     http.run();
     loop {

@@ -29,3 +29,5 @@ tower-http = { workspace = true, features = ["cors"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["fmt", "env-filter", "local-time"] }
 uuid = { workspace = true, features = ["v7"] }
+reqwest = { workspace = true, features = ["json"] }
+num-format = { workspace = true }

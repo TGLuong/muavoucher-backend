@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+pub mod link;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApiResponse<D> {
     pub success: bool,
