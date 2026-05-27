@@ -1,0 +1,33 @@
+[package]
+name = "muavoucher-backend"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = { workspace = true }
+argon2 =  { workspace = true }
+async-trait = { workspace = true }
+axum =  { workspace = true, features = ["ws"] }
+chrono = { workspace = true }
+clap = { workspace = true, features = ["derive", "env"] }
+hex = { workspace = true }
+hmac = { workspace = true }
+jsonwebtoken = { workspace = true, features = ["aws_lc_rs"] }
+lettre = { workspace = true, default-features = false, features = ["tokio1", "tokio1-native-tls", "smtp-transport", "builder", "hostname", "pool"] }
+log = { workspace = true }
+rand = { workspace = true }
+sea-orm = { workspace = true, features = ["sqlx-postgres", "runtime-tokio-rustls"] }
+sea-orm-migration = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+test-log = { workspace = true }
+thiserror = { workspace = true }
+time = { workspace = true, features = ["macros", "formatting"] }
+tokio = { workspace = true, features = ["full"] }
+tower-http = { workspace = true, features = ["cors"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["fmt", "env-filter", "local-time"] }
+uuid = { workspace = true, features = ["v7"] }
+reqwest = { workspace = true, features = ["json"] }
+num-format = { workspace = true }

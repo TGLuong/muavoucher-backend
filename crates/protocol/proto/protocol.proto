@@ -1,0 +1,36 @@
+syntax = "proto3";
+package protocol;
+
+service ProductDataService {
+    rpc ProcessData(stream ProductDataResponse) returns (stream ProductRequest);
+}
+
+service LinkGeneratorService {
+    rpc ProcessData(stream ProductLinkResponse) returns (stream ProductRequest);
+}
+
+service DiscountService {
+    rpc ProcessData(stream ProductDiscountResponse) returns (stream ProductRequest);
+}
+
+message ProductRequest {
+    string id = 1;
+    string link = 2;
+}
+
+message ProductDataResponse {
+    string id = 1;
+    string name = 2;
+    repeated string images = 3;
+    string price = 4;
+}
+
+message ProductLinkResponse {
+    string id = 1;
+    string link = 2;
+}
+
+message ProductDiscountResponse {
+    string id = 1;
+    string discount = 2;
+}
