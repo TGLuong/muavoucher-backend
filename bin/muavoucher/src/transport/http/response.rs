@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 pub mod link;
+pub mod panigation;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApiResponse<D> {

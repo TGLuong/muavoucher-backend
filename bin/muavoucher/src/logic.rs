@@ -1,6 +1,7 @@
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use rand::RngExt;
 use reqwest::Client;
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::process::Command;
@@ -11,9 +12,12 @@ use crate::{
     otp_notifier::{OtpNotifierError, OtpNotifierTrait},
     storage::{
         DatabaseError,
-        entities::user::{CreateUserRequest, LoginUserRequest, LoginUserResponse, UserEntity, UserFilter, UserOtpType},
+        entities::{
+            cookie::UpdateCookieRequest,
+            user::{CreateUserRequest, LoginUserRequest, LoginUserResponse, UserEntity, UserFilter, UserOtpType},
+        },
         kv_store::{KVStoreError, KVStoreTrait, OtpKey},
-        repository::{CenterDatabase, user::UserRepositoryTrait},
+        repository::{CenterDatabase, cookie::CookieRepositoryTrait, user::UserRepositoryTrait},
     },
     webhook_validator::WebhookValidator,
 };
@@ -85,6 +89,9 @@ where
         }
         if let Some(phone) = request.phone {
             filter = filter.with_phone(phone);
+        }
+        if let Some(user_name) = request.user_name {
+            filter = filter.with_user(user_name);
         }
         let user = self
             .database
@@ -191,15 +198,29 @@ where
     AU: AuthTokenTrait,
     WU: WebhookValidator,
 {
-    pub async fn get_link(&self, url: String) -> Result<String, String> {
-        let output = Command::new(&self.get_link_script).arg(url).output().await.map_err(|e| e.to_string())?;
-        if output.status.success() {
-            let response = serde_json::from_slice::<ShopeeResponse>(&output.stdout).map_err(|e| e.to_string())?;
-            let link = response.data.links.get(0).ok_or("missing ele 0".to_string())?;
-            return Ok(link.short_link.clone());
-        } else {
-            return Err("exec command error".into());
+    pub async fn get_link(&self, url: String, price: Decimal) -> Result<String, String> {
+        for _ in 0..5 {
+            let cookie = self.database.cookie_repository.find_cookie(price).await.map_err(|e| e.to_string())?;
+            let output = Command::new(&self.get_link_script)
+                .env("COOKIE", cookie.cookie)
+                .arg(&url)
+                .output()
+                .await
+                .map_err(|e| e.to_string())?;
+            if output.status.success() {
+                let response = serde_json::from_slice::<ShopeeResponse>(&output.stdout).map_err(|e| e.to_string())?;
+                let link = response.data.links.get(0).ok_or("missing ele 0".to_string())?;
+                return Ok(link.short_link.clone());
+            } else {
+                let request = UpdateCookieRequest::default().with_status(false);
+                self.database
+                    .cookie_repository
+                    .update(cookie.id, request)
+                    .await
+                    .map_err(|e| e.to_string())?;
+            }
         }
+        Err(format!("get link {url} error"))
     }
 
     pub async fn get_product_info(&self, url: String) -> Result<ProductResponse, String> {

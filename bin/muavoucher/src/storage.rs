@@ -1,4 +1,5 @@
 use sea_orm::DbErr;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 pub mod entities;
@@ -15,6 +16,8 @@ pub enum DatabaseError {
     Database(#[from] DbErr),
     #[error("{0:?}")]
     Anyhow(#[from] anyhow::Error),
+    #[error("Object Not Found: {0}")]
+    NotFound(String),
 }
 
 #[derive(Debug, Default)]
@@ -24,13 +27,34 @@ pub enum OrderDirection {
     Acsending,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct PanigationRequest<O> {
+    pub order: O,
+    pub limit: u64,
+    pub page: u64,
+}
+
+impl<O> Default for PanigationRequest<O>
+where
+    O: Default,
+{
+    fn default() -> Self {
+        Self {
+            order: Default::default(),
+            limit: 20,
+            page: 1,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct ListFilter<F, O> {
-    filter: F,
-    order: O,
-    direction: OrderDirection,
-    limit: u64,
-    offset: u64,
+    pub filter: F,
+    pub order: O,
+    pub direction: OrderDirection,
+    pub limit: u64,
+    pub offset: u64,
 }
 
 impl<F, O> ListFilter<F, O> {
@@ -48,6 +72,13 @@ impl<F, O> ListFilter<F, O> {
         self.direction = direction;
         self
     }
+
+    pub fn with_panigation(mut self, panigation: PanigationRequest<O>) -> Self {
+        self.order = panigation.order;
+        self.limit = panigation.limit;
+        self.offset = (panigation.page - 1) * panigation.limit;
+        self
+    }
 }
 
 impl<F, O> Default for ListFilter<F, O>
@@ -60,7 +91,7 @@ where
             filter: Default::default(),
             order: Default::default(),
             direction: Default::default(),
-            limit: 100,
+            limit: 20,
             offset: 0,
         }
     }

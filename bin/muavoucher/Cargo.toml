@@ -32,3 +32,4 @@ uuid = { workspace = true, features = ["v7"] }
 reqwest = { workspace = true, features = ["json"] }
 num-format = { workspace = true }
 openssl = { workspace = true, features = ["vendored"] }
+rust_decimal = { workspace = true }

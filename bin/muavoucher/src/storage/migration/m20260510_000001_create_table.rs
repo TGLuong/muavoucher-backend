@@ -12,6 +12,7 @@ impl MigrationTrait for Migration {
                     .table(User::Table)
                     .if_not_exists()
                     .col(ColumnDef::new(User::Id).uuid().primary_key().not_null())
+                    .col(ColumnDef::new(User::UserName).string().null())
                     .col(ColumnDef::new(User::Password).string().not_null())
                     .col(ColumnDef::new(User::FullName).string().null())
                     .col(ColumnDef::new(User::Avatar).string().null())
@@ -79,6 +80,7 @@ impl MigrationTrait for Migration {
 enum User {
     Table,
     Id,
+    UserName,
     Password,
     FullName,
     Avatar,

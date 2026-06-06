@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use axum::Router;
+use axum::{Router, middleware};
 use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
 
@@ -9,8 +9,9 @@ use crate::{
     otp_notifier::OtpNotifierTrait,
     storage::kv_store::KVStoreTrait,
     transport::http::{
-        api::{link, transaction, user},
+        api::{area, cookie, link, transaction, user},
         context::HttpContext,
+        tracing::tracing_handle_fn,
     },
     webhook_validator::WebhookValidator,
 };
@@ -39,6 +40,9 @@ impl HttpServer {
             .merge(user::router(context.clone()))
             .merge(transaction::router(context.clone()))
             .merge(link::router(context.clone()))
+            .merge(cookie::router(context.clone()))
+            .merge(area::router(context.clone()))
+            .layer(middleware::from_fn_with_state(context.clone(), tracing_handle_fn))
             .layer(CorsLayer::permissive());
         let listener = TcpListener::bind(socket).await?;
         Ok(Self { listener, router })

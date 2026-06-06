@@ -4,7 +4,7 @@ use axum::{
     routing::get,
 };
 use num_format::{Locale, ToFormattedString};
-use serde_json::Value;
+use rust_decimal::{Decimal, prelude::FromPrimitive};
 
 use crate::{
     auth_token::AuthTokenTrait,
@@ -39,8 +39,9 @@ where
     WU: WebhookValidator,
 {
     let mut response = GetLinkResponse::default();
-    let link = context.logic.get_link(query.url.clone()).await?;
-    let product_info = context.logic.get_product_info(query.url).await?;
+    let product_info = context.logic.get_product_info(query.url.clone()).await?;
+    let price = Decimal::from_u64(product_info.product_info.price).ok_or(format!("invalid price: {}", product_info.product_info.price))?;
+    let link = context.logic.get_link(query.url.clone(), price).await?;
     response.title = product_info.product_info.product_name;
     response.image_url = product_info.product_info.image_url;
     response.price_text = product_info.product_info.price.to_formatted_string(&Locale::vi);
