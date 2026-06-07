@@ -33,3 +33,4 @@ reqwest = { workspace = true, features = ["json"] }
 num-format = { workspace = true }
 openssl = { workspace = true, features = ["vendored"] }
 rust_decimal = { workspace = true }
+urlencoding = { workspace = true }

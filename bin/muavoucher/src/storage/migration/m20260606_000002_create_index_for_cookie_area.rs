@@ -34,6 +34,18 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        manager
+            .drop_index(Index::drop().table(Area::Table).name("idx-area-from").to_owned())
+            .await?;
+        manager
+            .drop_index(Index::drop().table(Area::Table).name("idx-area-to").to_owned())
+            .await?;
+        manager
+            .drop_index(Index::drop().table(Cookie::Table).name("idx-cookie-priority").to_owned())
+            .await?;
+        manager
+            .drop_index(Index::drop().table(Cookie::Table).name("idx-cookie-status").to_owned())
+            .await?;
         Ok(())
     }
 }

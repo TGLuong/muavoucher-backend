@@ -47,6 +47,12 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        let user = std::env::var("ADMIN_USER_NAME").unwrap_or("admin".to_string());
+        let stmt = Query::delete()
+            .from_table(User::Table)
+            .and_where(Expr::col(User::UserName).eq(user))
+            .to_owned();
+        manager.exec_stmt(stmt).await?;
         Ok(())
     }
 }

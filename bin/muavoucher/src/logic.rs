@@ -200,6 +200,7 @@ where
 {
     pub async fn get_link(&self, url: String, price: Decimal) -> Result<String, String> {
         for _ in 0..5 {
+            let url = urlencoding::encode(&url).to_string();
             let cookie = self.database.cookie_repository.find_cookie(price).await.map_err(|e| e.to_string())?;
             let output = Command::new(&self.get_link_script)
                 .env("COOKIE", cookie.cookie)
@@ -208,17 +209,19 @@ where
                 .await
                 .map_err(|e| e.to_string())?;
             if output.status.success() {
-                let response = serde_json::from_slice::<ShopeeResponse>(&output.stdout).map_err(|e| e.to_string())?;
-                let link = response.data.links.get(0).ok_or("missing ele 0".to_string())?;
-                return Ok(link.short_link.clone());
-            } else {
-                let request = UpdateCookieRequest::default().with_status(false);
-                self.database
-                    .cookie_repository
-                    .update(cookie.id, request)
-                    .await
-                    .map_err(|e| e.to_string())?;
+                if let Ok(response) = serde_json::from_slice::<ShopeeResponse>(&output.stdout) {
+                    if let Some(link) = response.data.links.get(0) {
+                        return Ok(link.short_link.clone());
+                    }
+                }
             }
+            log::error!("[Logic get_link] cookie {} failed => set status to false", cookie.id);
+            let request = UpdateCookieRequest::default().with_status(false);
+            self.database
+                .cookie_repository
+                .update(cookie.id, request)
+                .await
+                .map_err(|e| e.to_string())?;
         }
         Err(format!("get link {url} error"))
     }

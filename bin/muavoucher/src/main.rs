@@ -10,7 +10,7 @@ use tracing_subscriber::{EnvFilter, fmt::time::LocalTime};
 use crate::{
     auth_token::jwt::JwtAuthToken,
     logic::Logic,
-    otp_notifier::{stdout::StdoutOtpNotifier, zalo_gmail::ZaloGmailNotifier},
+    otp_notifier::zalo_gmail::ZaloGmailNotifier,
     storage::{kv_store::memory::MemoryCache, migration::Migrator, repository::init_repository},
     transport::http::{HttpServer, context::HttpContext},
     webhook_validator::sepay::SepayWebhookValidator,

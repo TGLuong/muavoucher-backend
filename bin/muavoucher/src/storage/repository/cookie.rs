@@ -1,7 +1,7 @@
 use rust_decimal::Decimal;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, FromQueryResult, JoinType, Order, QueryFilter, QueryOrder, QuerySelect,
-    RelationTrait, TryIntoModel, prelude::Expr,
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, JoinType, Order, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
+    TryIntoModel, prelude::Expr,
 };
 use uuid::Uuid;
 
