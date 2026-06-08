@@ -10,7 +10,7 @@ use tracing_subscriber::{EnvFilter, fmt::time::LocalTime};
 use crate::{
     auth_token::jwt::JwtAuthToken,
     logic::Logic,
-    otp_notifier::{stdout::StdoutOtpNotifier, zalo_gmail::ZaloGmailNotifier},
+    otp_notifier::zalo_gmail::ZaloGmailNotifier,
     storage::{kv_store::memory::MemoryCache, migration::Migrator, repository::init_repository},
     transport::http::{HttpServer, context::HttpContext},
     webhook_validator::sepay::SepayWebhookValidator,
@@ -100,15 +100,16 @@ async fn start(database: String, cmd: StartCommand) -> anyhow::Result<()> {
     let auth_token = JwtAuthToken::new(cmd.secret);
     let sepay_validator = SepayWebhookValidator::new(cmd.sepay_key);
     let database = init_repository(connection);
-    let http_context = HttpContext::new(Logic::new(
+    let logic = Logic::new(
         otp_notifier,
         kv_store,
         auth_token,
         sepay_validator,
-        database,
+        database.clone(),
         cmd.get_link_script,
         cmd.product_info_base,
-    ));
+    );
+    let http_context = HttpContext::new(logic, database.clone());
     let http = HttpServer::new(cmd.http_addr, http_context).await?;
     http.run();
     loop {

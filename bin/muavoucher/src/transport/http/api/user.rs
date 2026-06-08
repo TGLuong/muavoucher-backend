@@ -12,7 +12,7 @@ use crate::{
         entities::user::{CreateUserRequest, GetUserResponse, LoginUserRequest, LoginUserResponse, UserEntity, UserOtpType},
         kv_store::KVStoreTrait,
     },
-    transport::http::{context::HttpContext, request::AuthUserId, response::ApiResponse, tracing::tracing_handle_fn},
+    transport::http::{context::HttpContext, request::user::AuthUserId, response::ApiResponse, tracing::tracing_handle_fn},
     webhook_validator::WebhookValidator,
 };
 

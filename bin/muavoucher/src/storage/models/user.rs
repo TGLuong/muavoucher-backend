@@ -16,6 +16,7 @@ use crate::storage::{
 pub struct Model {
     #[sea_orm(primary_key)]
     id: Uuid,
+    user_name: Option<String>,
     password: String,
     full_name: Option<String>,
     avatar: Option<String>,
@@ -37,6 +38,7 @@ impl Into<UserEntity> for Model {
     fn into(self) -> UserEntity {
         UserEntity {
             id: self.id,
+            user_name: self.user_name,
             password: self.password,
             full_name: self.full_name,
             avatar: self.avatar,
@@ -105,6 +107,7 @@ impl TryFrom<CreateUserRequest> for ActiveModel {
             .to_string();
         Ok(Self {
             id: Set(id),
+            user_name: Set(value.user_name),
             password: Set(password),
             full_name: Set(value.full_name),
             avatar: Set(value.avatar),

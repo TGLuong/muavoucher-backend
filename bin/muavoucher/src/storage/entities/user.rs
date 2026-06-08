@@ -1,7 +1,9 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum UserRole {
     #[default]
@@ -28,9 +30,19 @@ impl Into<String> for UserRole {
     }
 }
 
+impl Display for UserRole {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            UserRole::User => write!(f, "user"),
+            UserRole::Admin => write!(f, "admin"),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserEntity {
     pub id: Uuid,
+    pub user_name: Option<String>,
     pub password: String,
     pub full_name: Option<String>,
     pub avatar: Option<String>,
@@ -42,6 +54,7 @@ pub struct UserEntity {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetUserResponse {
     pub id: Uuid,
+    pub user_name: Option<String>,
     pub full_name: Option<String>,
     pub avatar: Option<String>,
     pub phone: Option<String>,
@@ -52,6 +65,7 @@ impl From<UserEntity> for GetUserResponse {
     fn from(value: UserEntity) -> Self {
         Self {
             id: value.id,
+            user_name: value.user_name,
             full_name: value.full_name,
             avatar: value.avatar,
             phone: value.phone,
@@ -63,6 +77,7 @@ impl From<UserEntity> for GetUserResponse {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateUserRequest {
     pub password: String,
+    pub user_name: Option<String>,
     pub full_name: Option<String>,
     pub avatar: Option<String>,
     pub phone: Option<String>,
@@ -85,6 +100,7 @@ pub struct UpdatePasswordRequest {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LoginUserRequest {
+    pub user_name: Option<String>,
     pub phone: Option<String>,
     pub email: Option<String>,
     pub password: String,
@@ -106,6 +122,7 @@ pub enum UserOtpType {
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct UserFilter {
     pub id: Option<Uuid>,
+    pub user_name: Option<String>,
     pub full_name: Option<String>,
     pub phone: Option<String>,
     pub email: Option<String>,
@@ -114,6 +131,11 @@ pub struct UserFilter {
 impl UserFilter {
     pub fn with_id(mut self, id: Uuid) -> Self {
         self.id = Some(id);
+        self
+    }
+
+    pub fn with_user(mut self, user: String) -> Self {
+        self.user_name = Some(user);
         self
     }
 
