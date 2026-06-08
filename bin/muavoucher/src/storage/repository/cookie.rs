@@ -37,6 +37,9 @@ impl CookieRepository {
         if let Some(id) = list_filter.filter.id {
             query = query.filter(cookie::Column::Id.eq(id));
         }
+        if let Some(area) = list_filter.filter.area {
+            query = query.filter(cookie::Column::Area.eq(area));
+        }
         if let Some(name) = list_filter.filter.name {
             query = query.filter(cookie::Column::Name.eq(name));
         }
@@ -49,6 +52,7 @@ impl CookieRepository {
         if let Some(status) = list_filter.filter.status {
             query = query.filter(cookie::Column::Status.eq(status));
         }
+        query = query.order_by(cookie::Column::Priority, Order::Asc);
         match (list_filter.order, list_filter.direction) {
             (CookieOrder::CreatedAt, crate::storage::OrderDirection::Desending) => query = query.order_by(cookie::Column::CreatedAt, Order::Desc),
             (CookieOrder::CreatedAt, crate::storage::OrderDirection::Acsending) => query = query.order_by(cookie::Column::CreatedAt, Order::Asc),

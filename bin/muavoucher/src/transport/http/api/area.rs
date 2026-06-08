@@ -31,7 +31,7 @@ where
 {
     Router::new()
         .route("/api/v0/area", get(list_area).post(create_area))
-        .route("/api/v0/area/{id}", get(get_area).put(update_area))
+        .route("/api/v0/area/{id}", get(get_area).put(update_area).delete(delete_area))
         .with_state(context)
 }
 
@@ -109,4 +109,19 @@ where
 {
     let entity = context.database.area_repository.update(id, request).await.map_err(|e| e.to_string())?;
     Ok(Json(ApiResponse::success(Some("update area success".into()), entity)))
+}
+
+pub async fn delete_area<OTP, KV, AU, WU>(
+    State(context): State<HttpContext<OTP, KV, AU, WU>>,
+    AdminUser: AdminUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ApiResponse<u64>>, String>
+where
+    OTP: OtpNotifierTrait,
+    KV: KVStoreTrait,
+    AU: AuthTokenTrait,
+    WU: WebhookValidator,
+{
+    let count = context.database.area_repository.delete(vec![id]).await.map_err(|e| e.to_string())?;
+    Ok(Json(ApiResponse::success(Some("delete area success".into()), count)))
 }

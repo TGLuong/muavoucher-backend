@@ -32,7 +32,7 @@ where
 {
     Router::new()
         .route("/api/v0/cookie", get(list_cookie).post(create_cookie))
-        .route("/api/v0/cookie/{id}", get(get_cookie).put(update_cookie))
+        .route("/api/v0/cookie/{id}", get(get_cookie).put(update_cookie).delete(delete_cookie))
         .route("/api/v0/cookie/find/{price}", get(find_cookie))
         .with_state(context)
 }
@@ -95,6 +95,21 @@ where
 {
     let entity = context.database.cookie_repository.create(request).await.map_err(|e| e.to_string())?;
     Ok(Json(ApiResponse::success(Some("created cookie success".into()), entity)))
+}
+
+pub async fn delete_cookie<OTP, KV, AU, WU>(
+    State(context): State<HttpContext<OTP, KV, AU, WU>>,
+    AdminUser: AdminUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ApiResponse<u64>>, String>
+where
+    OTP: OtpNotifierTrait,
+    KV: KVStoreTrait,
+    AU: AuthTokenTrait,
+    WU: WebhookValidator,
+{
+    let count = context.database.cookie_repository.delete(vec![id]).await.map_err(|e| e.to_string())?;
+    Ok(Json(ApiResponse::success(Some("updated cookie success".into()), count)))
 }
 
 pub async fn update_cookie<OTP, KV, AU, WU>(

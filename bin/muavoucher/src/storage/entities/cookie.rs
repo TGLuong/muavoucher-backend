@@ -43,6 +43,7 @@ impl UpdateCookieRequest {
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct CookieFilter {
     pub id: Option<Uuid>,
+    pub area: Option<Uuid>,
     pub name: Option<String>,
     pub search: Option<String>,
     pub priority: Option<i32>,

@@ -64,7 +64,21 @@ impl ActiveModel {
     }
 }
 
-impl ActiveModelBehavior for ActiveModel {}
+#[async_trait::async_trait]
+impl ActiveModelBehavior for ActiveModel {
+    async fn before_save<C>(self, _db: &C, insert: bool) -> Result<Self, DbErr>
+    where
+        C: ConnectionTrait,
+    {
+        let mut model = self;
+        if insert {
+            model.created_at = Set(Utc::now().into())
+        } else {
+            model.updated_at = Set(Utc::now().into())
+        }
+        Ok(model)
+    }
+}
 
 impl From<CreateAreaRequest> for ActiveModel {
     fn from(value: CreateAreaRequest) -> Self {
