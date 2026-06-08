@@ -200,7 +200,6 @@ where
 {
     pub async fn get_link(&self, url: String, price: Decimal) -> Result<String, String> {
         for _ in 0..5 {
-            let url = urlencoding::encode(&url).to_string();
             let cookie = self.database.cookie_repository.find_cookie(price).await.map_err(|e| e.to_string())?;
             let output = Command::new(&self.get_link_script)
                 .env("COOKIE", cookie.cookie)
