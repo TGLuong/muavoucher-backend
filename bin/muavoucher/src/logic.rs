@@ -189,6 +189,9 @@ pub struct ProductInfo {
     pub image_url: String,
     #[serde(rename = "shopeeComFinal")]
     pub shopee_com_final: u64,
+    #[serde(rename = "sellerComFinal")]
+    pub seller_com_final: u64,
+    pub commission: u64,
 }
 
 impl<OTP, KV, AU, WU> Logic<OTP, KV, AU, WU>
