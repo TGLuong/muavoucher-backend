@@ -45,14 +45,9 @@ where
         let info = tiktok_product.products.first().cloned().ok_or("product not found".to_string())?;
         response.title = info.title;
         response.image_url = info.main_image_url;
-        let maximum_amount = info.original_price.maximum_amount.parse::<u64>().map_err(|e| e.to_string())?;
         let minimum_amount = info.original_price.minimum_amount.parse::<u64>().map_err(|e| e.to_string())?;
-        response.price_text = format!("{} - {}", maximum_amount, minimum_amount);
-        response.reward_text = format!(
-            "{} - {}",
-            (maximum_amount / 100000 * info.commission.rate) * 100 / 80,
-            (minimum_amount / 100000 * info.commission.rate) * 100 / 80,
-        );
+        response.price_text = format!("{}", minimum_amount.to_formatted_string(&Locale::vi));
+        response.reward_text = format!("{}", (minimum_amount / 100000 * info.commission.rate) / 100 * 80,);
         response.buy_url = tiktok_aff.affiliate_link;
     } else {
         let product_info = context.logic.get_shopee_info(query.url.clone()).await?;
@@ -61,7 +56,7 @@ where
         response.title = product_info.product_info.product_name;
         response.image_url = product_info.product_info.image_url;
         response.price_text = product_info.product_info.price.to_formatted_string(&Locale::vi);
-        let commission = product_info.product_info.commission * 100 / 80;
+        let commission = product_info.product_info.commission / 100 * 80;
         response.reward_text = commission.to_formatted_string(&Locale::vi);
         response.buy_url = link;
     }

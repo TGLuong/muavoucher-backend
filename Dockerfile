@@ -1,4 +1,4 @@
-FROM alpine:3.19
+FROM alpine:latest
 
 RUN apk add --no-cache ca-certificates bash \
     && apk add --no-cache curl-impersonate --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/
