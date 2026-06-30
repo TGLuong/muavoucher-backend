@@ -39,14 +39,24 @@ where
     WU: WebhookValidator,
 {
     let mut response = GetLinkResponse::default();
-    let product_info = context.logic.get_product_info(query.url.clone()).await?;
-    let price = Decimal::from_u64(product_info.product_info.price).ok_or(format!("invalid price: {}", product_info.product_info.price))?;
-    let link = context.logic.get_link(query.url.clone(), price).await?;
-    response.title = product_info.product_info.product_name;
-    response.image_url = product_info.product_info.image_url;
-    response.price_text = product_info.product_info.price.to_formatted_string(&Locale::vi);
-    let commission = product_info.product_info.commission * 100 / 80;
-    response.reward_text = commission.to_formatted_string(&Locale::vi);
-    response.buy_url = link;
+    if query.url.contains("tiktok") {
+        let tiktok_aff = context.logic.get_tiktok_link(query.url).await?;
+        let tiktok_product = context.logic.get_tiktok_info(tiktok_aff.product_id).await?;
+        let info = tiktok_product.products.first().cloned().ok_or("product not found".to_string())?;
+        response.title = info.title;
+        response.image_url = info.main_image_url;
+        response.price_text = format!("{} - {}", info.original_price.maximum_amount, info.original_price.minimum_amount);
+        response.reward_text = info.commission.amount;
+    } else {
+        let product_info = context.logic.get_shopee_info(query.url.clone()).await?;
+        let price = Decimal::from_u64(product_info.product_info.price).ok_or(format!("invalid price: {}", product_info.product_info.price))?;
+        let link = context.logic.get_shopee_link(query.url.clone(), price).await?;
+        response.title = product_info.product_info.product_name;
+        response.image_url = product_info.product_info.image_url;
+        response.price_text = product_info.product_info.price.to_formatted_string(&Locale::vi);
+        let commission = product_info.product_info.commission * 100 / 80;
+        response.reward_text = commission.to_formatted_string(&Locale::vi);
+        response.buy_url = link;
+    }
     Ok(Json(ApiResponse::success(Some("transaction successfully".into()), response)))
 }

@@ -1,8 +1,11 @@
+use std::time::Duration;
+
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use rand::RngExt;
 use reqwest::Client;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use thiserror::Error;
 use tokio::process::Command;
 use uuid::Uuid;
@@ -49,6 +52,9 @@ pub struct Logic<OTP, KV, AU, WU> {
     database: CenterDatabase,
     get_link_script: String,
     product_data_base: String,
+    riohub_key: String,
+    tiktok_creator_username: String,
+    tiktok_subid: String,
     client: Client,
 }
 
@@ -61,6 +67,9 @@ impl<OTP, KV, AU, WU> Logic<OTP, KV, AU, WU> {
         database: CenterDatabase,
         get_link_script: String,
         product_data_base: String,
+        riohub_key: String,
+        tiktok_creator_username: String,
+        tiktok_subid: String,
     ) -> Self {
         Self {
             otp_notifier,
@@ -70,6 +79,9 @@ impl<OTP, KV, AU, WU> Logic<OTP, KV, AU, WU> {
             database,
             get_link_script,
             product_data_base,
+            riohub_key,
+            tiktok_creator_username,
+            tiktok_subid,
             client: Client::new(),
         }
     }
@@ -169,6 +181,36 @@ struct BatchCustomLink {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct TiktokAffLink {
+    pub affiliate_link: String,
+    pub product_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TiktokProductInfoResponse {
+    pub products: Vec<TiktokProductInfo>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TiktokProductInfo {
+    pub title: String,
+    pub main_image_url: String,
+    pub commission: TiktokCommission,
+    pub original_price: TiktokPrice,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TiktokCommission {
+    pub amount: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TiktokPrice {
+    pub minimum_amount: String,
+    pub maximum_amount: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 struct LinkDetail {
     #[serde(rename = "shortLink")]
     pub short_link: String,
@@ -201,7 +243,7 @@ where
     AU: AuthTokenTrait,
     WU: WebhookValidator,
 {
-    pub async fn get_link(&self, url: String, price: Decimal) -> Result<String, String> {
+    pub async fn get_shopee_link(&self, url: String, price: Decimal) -> Result<String, String> {
         for _ in 0..5 {
             let cookie = self.database.cookie_repository.find_cookie(price).await.map_err(|e| e.to_string())?;
             let output = Command::new(&self.get_link_script)
@@ -228,10 +270,40 @@ where
         Err(format!("get link {url} error"))
     }
 
-    pub async fn get_product_info(&self, url: String) -> Result<ProductResponse, String> {
+    pub async fn get_shopee_info(&self, url: String) -> Result<ProductResponse, String> {
         let url = format!("{}?url={}", self.product_data_base, url);
         let response = self.client.get(url).send().await.map_err(|e| e.to_string())?;
         let body = response.json::<ProductResponse>().await.map_err(|e| e.to_string())?;
         Ok(body)
+    }
+
+    pub async fn get_tiktok_link(&self, url: String) -> Result<TiktokAffLink, String> {
+        let response = self
+            .client
+            .post("https://riohub.vn/api/v1/partner/tiktok/affiliate/links")
+            .header("X-Riohub-Api-Key", &self.riohub_key)
+            .timeout(Duration::from_secs(10))
+            .json(&json!({ "creator_username": &self.tiktok_creator_username, "product_url": url, "sub_id": &&self.tiktok_subid}))
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+        let response = response.json::<TiktokAffLink>().await.map_err(|e| e.to_string())?;
+        Ok(response)
+    }
+
+    pub async fn get_tiktok_info(&self, product_id: String) -> Result<TiktokProductInfoResponse, String> {
+        let response = self
+            .client
+            .get(format!(
+                "https://riohub.vn/api/v1/partner/tiktok/affiliate/products?creator_username={}&product_id={}",
+                self.tiktok_creator_username, product_id
+            ))
+            .header("X-Riohub-Api-Key", &self.riohub_key)
+            .timeout(Duration::from_secs(10))
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+        let response = response.json::<TiktokProductInfoResponse>().await.map_err(|e| e.to_string())?;
+        Ok(response)
     }
 }

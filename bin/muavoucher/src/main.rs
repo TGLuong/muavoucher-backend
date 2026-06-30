@@ -59,6 +59,12 @@ struct StartCommand {
     get_link_script: String,
     #[arg(long, env)]
     product_info_base: String,
+    #[arg(long, env)]
+    riohub_key: String,
+    #[arg(long, env)]
+    tiktok_creator_username: String,
+    #[arg(long, env)]
+    tiktok_subid: String,
 }
 
 #[derive(Debug, Parser)]
@@ -108,6 +114,9 @@ async fn start(database: String, cmd: StartCommand) -> anyhow::Result<()> {
         database.clone(),
         cmd.get_link_script,
         cmd.product_info_base,
+        cmd.riohub_key,
+        cmd.tiktok_creator_username,
+        cmd.tiktok_subid,
     );
     let http_context = HttpContext::new(logic, database.clone());
     let http = HttpServer::new(cmd.http_addr, http_context).await?;
