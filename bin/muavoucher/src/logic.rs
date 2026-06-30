@@ -201,7 +201,7 @@ pub struct TiktokProductInfo {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TiktokCommission {
-    pub amount: String,
+    pub rate: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

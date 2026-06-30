@@ -45,8 +45,15 @@ where
         let info = tiktok_product.products.first().cloned().ok_or("product not found".to_string())?;
         response.title = info.title;
         response.image_url = info.main_image_url;
-        response.price_text = format!("{} - {}", info.original_price.maximum_amount, info.original_price.minimum_amount);
-        response.reward_text = info.commission.amount;
+        let maximum_amount = info.original_price.maximum_amount.parse::<u64>().map_err(|e| e.to_string())?;
+        let minimum_amount = info.original_price.minimum_amount.parse::<u64>().map_err(|e| e.to_string())?;
+        response.price_text = format!("{} - {}", maximum_amount, minimum_amount);
+        response.reward_text = format!(
+            "{} - {}",
+            (maximum_amount / 100000 * info.commission.rate) * 100 / 80,
+            (minimum_amount / 100000 * info.commission.rate) * 100 / 80,
+        );
+        response.buy_url = tiktok_aff.affiliate_link;
     } else {
         let product_info = context.logic.get_shopee_info(query.url.clone()).await?;
         let price = Decimal::from_u64(product_info.product_info.price).ok_or(format!("invalid price: {}", product_info.product_info.price))?;
