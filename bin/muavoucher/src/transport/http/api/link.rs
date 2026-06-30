@@ -45,7 +45,8 @@ where
     response.title = product_info.product_info.product_name;
     response.image_url = product_info.product_info.image_url;
     response.price_text = product_info.product_info.price.to_formatted_string(&Locale::vi);
-    response.reward_text = product_info.product_info.commission.to_formatted_string(&Locale::vi);
+    let commission = product_info.product_info.commission * 100 / 80;
+    response.reward_text = commission.to_formatted_string(&Locale::vi);
     response.buy_url = link;
     Ok(Json(ApiResponse::success(Some("transaction successfully".into()), response)))
 }
