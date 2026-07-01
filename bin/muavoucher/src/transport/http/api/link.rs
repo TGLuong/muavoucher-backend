@@ -46,9 +46,11 @@ where
         response.title = info.title;
         response.image_url = info.main_image_url;
         let minimum_amount = info.original_price.minimum_amount.parse::<u64>().map_err(|e| e.to_string())?;
+        let commission = (minimum_amount / 100 * (info.commission.rate / 100)) / 100 * 80;
         response.price_text = format!("{}", minimum_amount.to_formatted_string(&Locale::vi));
-        response.reward_text = format!("{}", (minimum_amount / 100000 * info.commission.rate) / 100 * 80,);
+        response.reward_text = format!("{}", commission.to_formatted_string(&Locale::vi));
         response.buy_url = tiktok_aff.affiliate_link;
+        response.platform = "tiktok".to_string();
     } else {
         let product_info = context.logic.get_shopee_info(query.url.clone()).await?;
         let price = Decimal::from_u64(product_info.product_info.price).ok_or(format!("invalid price: {}", product_info.product_info.price))?;
