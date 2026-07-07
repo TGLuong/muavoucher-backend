@@ -5,6 +5,7 @@ use crate::{
 use axum::{extract::FromRequestParts, http::request::Parts};
 
 pub mod link;
+pub mod product;
 pub mod sepay;
 pub mod user;
 

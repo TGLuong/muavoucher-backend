@@ -16,9 +16,9 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub struct AdminUser;
+pub struct CookieManagerUser;
 
-impl<OTP, KV, AU, WU> FromRequestParts<HttpContext<OTP, KV, AU, WU>> for AdminUser
+impl<OTP, KV, AU, WU> FromRequestParts<HttpContext<OTP, KV, AU, WU>> for CookieManagerUser
 where
     OTP: OtpNotifierTrait,
     KV: KVStoreTrait,
@@ -39,10 +39,10 @@ where
             .await
             .map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))?;
         let role: UserRole = claims.user_role.clone().into();
-        (role == UserRole::Admin)
+        (role == UserRole::Admin || role == UserRole::CookieManager)
             .then_some(())
             .ok_or((StatusCode::UNAUTHORIZED, format!("claims {:?} is not admin", claims)))?;
-        Ok(AdminUser)
+        Ok(Self)
     }
 }
 

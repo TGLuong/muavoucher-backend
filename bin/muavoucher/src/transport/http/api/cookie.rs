@@ -17,7 +17,7 @@ use crate::{
     },
     transport::http::{
         context::HttpContext,
-        request::user::AdminUser,
+        request::user::CookieManagerUser,
         response::{ApiResponse, panigation::PanigationRespose},
     },
     webhook_validator::WebhookValidator,
@@ -39,7 +39,7 @@ where
 
 pub async fn list_cookie<OTP, KV, AU, WU>(
     State(context): State<HttpContext<OTP, KV, AU, WU>>,
-    AdminUser: AdminUser,
+    CookieManagerUser: CookieManagerUser,
     Query(filter): Query<CookieFilter>,
     Query(panigation): Query<PanigationRequest<CookieOrder>>,
 ) -> Result<Json<ApiResponse<PanigationRespose<CookieEntity>>>, String>
@@ -63,7 +63,7 @@ where
 
 pub async fn get_cookie<OTP, KV, AU, WU>(
     State(context): State<HttpContext<OTP, KV, AU, WU>>,
-    AdminUser: AdminUser,
+    CookieManagerUser: CookieManagerUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ApiResponse<CookieEntity>>, String>
 where
@@ -84,7 +84,7 @@ where
 
 pub async fn create_cookie<OTP, KV, AU, WU>(
     State(context): State<HttpContext<OTP, KV, AU, WU>>,
-    AdminUser: AdminUser,
+    CookieManagerUser: CookieManagerUser,
     Json(request): Json<CreateCookieRequest>,
 ) -> Result<Json<ApiResponse<CookieEntity>>, String>
 where
@@ -99,7 +99,7 @@ where
 
 pub async fn delete_cookie<OTP, KV, AU, WU>(
     State(context): State<HttpContext<OTP, KV, AU, WU>>,
-    AdminUser: AdminUser,
+    CookieManagerUser: CookieManagerUser,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ApiResponse<u64>>, String>
 where
@@ -114,7 +114,7 @@ where
 
 pub async fn update_cookie<OTP, KV, AU, WU>(
     State(context): State<HttpContext<OTP, KV, AU, WU>>,
-    AdminUser: AdminUser,
+    CookieManagerUser: CookieManagerUser,
     Path(id): Path<Uuid>,
     Json(request): Json<UpdateCookieRequest>,
 ) -> Result<Json<ApiResponse<CookieEntity>>, String>
@@ -130,7 +130,7 @@ where
 
 pub async fn find_cookie<OTP, KV, AU, WU>(
     State(context): State<HttpContext<OTP, KV, AU, WU>>,
-    AdminUser: AdminUser,
+    CookieManagerUser: CookieManagerUser,
     Path(price): Path<Decimal>,
 ) -> Result<Json<ApiResponse<CookieEntity>>, String>
 where

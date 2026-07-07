@@ -4,11 +4,13 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum UserRole {
     #[default]
     User,
     Admin,
+    CookieManager,
+    ProductManager,
 }
 
 impl From<String> for UserRole {
@@ -16,6 +18,8 @@ impl From<String> for UserRole {
         match value.as_ref() {
             "user" => Self::User,
             "admin" => Self::Admin,
+            "cookie_manager" => Self::CookieManager,
+            "product_manager" => Self::ProductManager,
             _ => Self::User,
         }
     }
@@ -23,10 +27,7 @@ impl From<String> for UserRole {
 
 impl Into<String> for UserRole {
     fn into(self) -> String {
-        match self {
-            UserRole::User => "user".into(),
-            UserRole::Admin => "admin".into(),
-        }
+        self.to_string()
     }
 }
 
@@ -35,6 +36,8 @@ impl Display for UserRole {
         match self {
             UserRole::User => write!(f, "user"),
             UserRole::Admin => write!(f, "admin"),
+            UserRole::CookieManager => write!(f, "cookie_manager"),
+            UserRole::ProductManager => write!(f, "product_manager"),
         }
     }
 }
@@ -59,6 +62,7 @@ pub struct GetUserResponse {
     pub avatar: Option<String>,
     pub phone: Option<String>,
     pub email: Option<String>,
+    pub role: Option<String>,
 }
 
 impl From<UserEntity> for GetUserResponse {
@@ -70,6 +74,7 @@ impl From<UserEntity> for GetUserResponse {
             avatar: value.avatar,
             phone: value.phone,
             email: value.email,
+            role: Some(value.role.to_string()),
         }
     }
 }
