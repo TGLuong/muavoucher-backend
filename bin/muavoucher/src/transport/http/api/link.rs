@@ -46,7 +46,7 @@ where
         response.title = info.title;
         response.image_url = info.main_image_url;
         let minimum_amount = info.original_price.minimum_amount.parse::<u64>().map_err(|e| e.to_string())?;
-        let commission = (minimum_amount / 100 * (info.commission.rate / 100)) / 100 * 80;
+        let commission = (minimum_amount / 100 * (info.commission.rate / 100)) / 100 * 70;
         response.price_text = format!("{}", minimum_amount.to_formatted_string(&Locale::vi));
         response.reward_text = format!("{}", commission.to_formatted_string(&Locale::vi));
         response.buy_url = tiktok_aff.affiliate_link;
