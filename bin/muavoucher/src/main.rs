@@ -65,6 +65,8 @@ struct StartCommand {
     tiktok_creator_username: String,
     #[arg(long, env)]
     tiktok_subid: String,
+    #[arg(long, env)]
+    addlivetag_key: String,
 }
 
 #[derive(Debug, Parser)]
@@ -117,6 +119,7 @@ async fn start(database: String, cmd: StartCommand) -> anyhow::Result<()> {
         cmd.riohub_key,
         cmd.tiktok_creator_username,
         cmd.tiktok_subid,
+        cmd.addlivetag_key,
     );
     let http_context = HttpContext::new(logic, database.clone());
     let http = HttpServer::new(cmd.http_addr, http_context).await?;

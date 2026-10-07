@@ -52,6 +52,7 @@ pub struct Logic<OTP, KV, AU, WU> {
     database: CenterDatabase,
     get_link_script: String,
     product_data_base: String,
+    addlivetag_key: String,
     riohub_key: String,
     tiktok_creator_username: String,
     tiktok_subid: String,
@@ -70,6 +71,7 @@ impl<OTP, KV, AU, WU> Logic<OTP, KV, AU, WU> {
         riohub_key: String,
         tiktok_creator_username: String,
         tiktok_subid: String,
+        addlivetag_key: String,
     ) -> Self {
         Self {
             otp_notifier,
@@ -83,6 +85,7 @@ impl<OTP, KV, AU, WU> Logic<OTP, KV, AU, WU> {
             tiktok_creator_username,
             tiktok_subid,
             client: Client::new(),
+            addlivetag_key,
         }
     }
 }
@@ -272,7 +275,13 @@ where
 
     pub async fn get_shopee_info(&self, url: String) -> Result<ProductResponse, String> {
         let url = format!("{}?url={}", self.product_data_base, url);
-        let response = self.client.get(url).send().await.map_err(|e| e.to_string())?;
+        let response = self
+            .client
+            .get(url)
+            .header("X-API-KEY", &self.addlivetag_key)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
         let body = response.json::<ProductResponse>().await.map_err(|e| e.to_string())?;
         Ok(body)
     }
